@@ -10,6 +10,17 @@ to a specified precision (in sextets). It does this by, instead of repeatedly
 Base64-encoding a string, simply keeping track of the delta between the 8-bit
 input and 6-bit output (prior to table lookup).
 
+    cls@chalk$ ./b64fix 171 | fold -w 76; echo
+    Vm0wd2QyUXlVWGxWV0d4V1YwZDRWMVl3WkRSV01WbDNXa1JTVjAxV2JETlhhMUpUVmpBeFYySkVU
+    bGhoTVVwVVZtcEJlRll5U2tWVWJHaG9UVlZ3VlZadGNFSmxSbGw1VTJ0V1ZXSkhhRzlVVmxaM1Zs
+    WmFkR05GU214U2JHdzFWVEowVjFaWFNraGhSemxWVm14YU0xWnNXbUZrUjA1R1UyMTRVMkpIZHpG
+    cls@chalk$ ./b64fix 171 | base64
+    Vm0wd2QyUXlVWGxWV0d4V1YwZDRWMVl3WkRSV01WbDNXa1JTVjAxV2JETlhhMUpUVmpBeFYySkVU
+    bGhoTVVwVVZtcEJlRll5U2tWVWJHaG9UVlZ3VlZadGNFSmxSbGw1VTJ0V1ZXSkhhRzlVVmxaM1Zs
+    WmFkR05GU214U2JHdzFWVEowVjFaWFNraGhSemxWVm14YU0xWnNXbUZrUjA1R1UyMTRVMkpIZHpG
+    V1ZFb3dWakZhV0ZOcmFHaFNlbXhXVm0xNFlVMHhXbk5YYlVaclVqQTFSMVV5TVRSVk1rcElaSHBH
+    cls@chalk$
+
 The result is reasonably fast:
 
     cls@chalk$ n=$((32*1024*1024)) # 32 MiB
