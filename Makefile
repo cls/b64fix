@@ -1,4 +1,4 @@
-CXXFLAGS = -O3 -Wall -pedantic -std=c++17
+CXXFLAGS = -O3 -Wall -pedantic -std=c++20
 LDFLAGS =
 
 all: b64fix

@@ -2,10 +2,11 @@
 #include <charconv>
 #include <deque>
 #include <iostream>
+#include <optional>
 
 namespace {
 
-const std::array<unsigned char, 64> Base64 = {
+constexpr std::array<unsigned char, 64> base64 = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
     'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
     'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -15,6 +16,50 @@ const std::array<unsigned char, 64> Base64 = {
     'w', 'x', 'y', 'z', '0', '1', '2', '3',
     '4', '5', '6', '7', '8', '9', '+', '/',
 };
+
+template <typename InputIt, typename UnaryPred>
+constexpr InputIt find_if_unique(InputIt first, InputIt last, UnaryPred p)
+{
+    InputIt found = last;
+    for (InputIt it = first; it != last; ++it) {
+        if (p(*it)) {
+            if (found != last) {
+                return last;
+            }
+            found = it;
+        }
+    }
+    return found;
+}
+
+using Seed = std::array<unsigned char, 3>;
+
+constexpr std::optional<Seed> find_seed()
+{
+    const auto it0 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+        return base64[c >> 2] == c;
+    });
+    if (it0 != base64.end()) {
+        const auto it1 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+            return base64[((*it0 << 4) % 64) | (c >> 4)] == c;
+        });
+        if (it1 != base64.end()) {
+            const auto it2 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+                return base64[((*it1 << 2) % 64) | (c >> 6)] == c;
+            });
+            if (it2 != base64.end()) {
+                return Seed{*it0, *it1, *it2};
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+static_assert(find_seed(), "Seed is expected to be found");
+
+constexpr Seed seed = *find_seed();
+
+static_assert(seed == Seed{'V', 'm', '0'}, "Seed is expected to be 'Vm0'");
 
 class Base64Queue
 {
@@ -77,7 +122,7 @@ public:
             __builtin_unreachable();
         }
 
-        return Base64[i];
+        return base64[i];
     }
 };
 
@@ -102,8 +147,6 @@ int main(int argc, char** argv)
     Base64Queue b64q;
 
     size_t i = 0;
-
-    const std::array<unsigned char, 3> seed = {'V', 'm', '0'};
 
     for (; i < seed.size() && i < n; ++i) {
         b64q.push_back(seed[i]);
