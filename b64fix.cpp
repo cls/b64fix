@@ -3,6 +3,7 @@
 #include <deque>
 #include <iostream>
 #include <optional>
+#include <utility>
 
 namespace {
 
@@ -119,7 +120,7 @@ public:
             bytes_.pop_front();
             break;
         default:
-            __builtin_unreachable();
+            std::unreachable();
         }
 
         return base64[i];
