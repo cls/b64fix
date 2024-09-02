@@ -137,7 +137,7 @@ int main(int argc, char** argv)
     }
 
     size_t n;
-    const std::string arg(argv[1]);
+    const std::string_view arg(argv[1]);
     auto [ptr, ec] = std::from_chars(&*arg.begin(), &*arg.end(), n);
 
     if (ec != std::errc()) {
