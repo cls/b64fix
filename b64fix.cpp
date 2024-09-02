@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr std::array<unsigned char, 64> base64 = {
+constexpr std::array<uint8_t, 64> base64 = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
     'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
     'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -33,19 +33,19 @@ constexpr InputIt find_if_unique(InputIt first, InputIt last, UnaryPred p)
     return found;
 }
 
-using Seed = std::array<unsigned char, 3>;
+using Seed = std::array<uint8_t, 3>;
 
 constexpr std::optional<Seed> find_seed()
 {
-    const auto it0 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+    const auto it0 = find_if_unique(base64.begin(), base64.end(), [&](uint8_t c) {
         return base64[c >> 2] == c;
     });
     if (it0 != base64.end()) {
-        const auto it1 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+        const auto it1 = find_if_unique(base64.begin(), base64.end(), [&](uint8_t c) {
             return base64[((*it0 << 4) % 64) | (c >> 4)] == c;
         });
         if (it1 != base64.end()) {
-            const auto it2 = find_if_unique(base64.begin(), base64.end(), [&](unsigned char c) {
+            const auto it2 = find_if_unique(base64.begin(), base64.end(), [&](uint8_t c) {
                 return base64[((*it1 << 2) % 64) | (c >> 6)] == c;
             });
             if (it2 != base64.end()) {
@@ -65,7 +65,7 @@ static_assert(seed == Seed{'V', 'm', '0'}, "Seed is expected to be 'Vm0'");
 class Base64Queue
 {
 private:
-    std::deque<unsigned char> bytes_;
+    std::deque<uint8_t> bytes_;
     int state_;
 
 public:
@@ -78,12 +78,12 @@ public:
         return bytes_.empty() && state_ == 0;
     }
 
-    void push_back(unsigned char c)
+    void push_back(uint8_t c)
     {
         bytes_.push_back(c);
     }
 
-    unsigned char pop_front()
+    uint8_t pop_front()
     {
         size_t i;
 
@@ -151,18 +151,18 @@ int main(int argc, char** argv)
 
     for (; i < seed.size() && i < n; ++i) {
         b64q.push_back(seed[i]);
-        const auto c = b64q.pop_front();
+        const uint8_t c = b64q.pop_front();
         std::cout.put(c);
     }
 
     for (; i < n; ++i) {
-        const auto c = b64q.pop_front();
+        const uint8_t c = b64q.pop_front();
         std::cout.put(c);
         b64q.push_back(c);
     }
 
     while (!b64q.empty()) {
-        const auto c = b64q.pop_front();
+        const uint8_t c = b64q.pop_front();
         std::cout.put(c);
     }
 
