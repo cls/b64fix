@@ -65,8 +65,9 @@ static_assert(seed == Seed{'V', 'm', '0'}, "Seed is expected to be 'Vm0'");
 class Base64Queue
 {
 private:
-    std::deque<uint8_t> bytes_;
     int state_;
+    std::optional<uint8_t> peek_;
+    std::deque<uint8_t> bytes_;
 
 public:
     Base64Queue() :
@@ -83,47 +84,52 @@ public:
         bytes_.push_back(c);
     }
 
-    uint8_t pop_front()
+    uint8_t front() const
     {
         size_t i;
 
         switch (state_) {
         case 0:
-            state_ = 1;
             i = bytes_.front() >> 2;
             break;
         case 1:
-            state_ = 2;
-            i = (bytes_.front() << 4) % 64;
-            bytes_.pop_front();
+            i = (*peek_ << 4) % 64;
             if (!bytes_.empty()) {
                 i |= bytes_.front() >> 4;
             }
             break;
         case 2:
-            state_ = 3;
-            if (bytes_.empty()) {
+            if (!peek_) {
                 return '=';
             }
-            i = (bytes_.front() << 2) % 64;
-            bytes_.pop_front();
+            i = (*peek_ << 2) % 64;
             if (!bytes_.empty()) {
                 i |= bytes_.front() >> 6;
             }
             break;
         case 3:
-            state_ = 0;
-            if (bytes_.empty()) {
+            if (!peek_) {
                 return '=';
             }
-            i = bytes_.front() % 64;
-            bytes_.pop_front();
+            i = *peek_ % 64;
             break;
         default:
             std::unreachable();
         }
 
         return base64[i];
+    }
+
+    void pop_front()
+    {
+        state_ = (state_ + 1) % 4;
+
+        if (state_ == 0 || bytes_.empty()) {
+            peek_.reset();
+        } else {
+            peek_ = bytes_.front();
+            bytes_.pop_front();
+        }
     }
 };
 
@@ -151,19 +157,22 @@ int main(int argc, char** argv)
 
     for (; i < seed.size() && i < n; ++i) {
         b64q.push_back(seed[i]);
-        const uint8_t c = b64q.pop_front();
+        const uint8_t c = b64q.front();
         std::cout.put(c);
+        b64q.pop_front();
     }
 
     for (; i < n; ++i) {
-        const uint8_t c = b64q.pop_front();
+        const uint8_t c = b64q.front();
         std::cout.put(c);
+        b64q.pop_front();
         b64q.push_back(c);
     }
 
     while (!b64q.empty()) {
-        const uint8_t c = b64q.pop_front();
+        const uint8_t c = b64q.front();
         std::cout.put(c);
+        b64q.pop_front();
     }
 
     std::cout.flush();
