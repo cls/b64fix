@@ -62,12 +62,41 @@ constexpr Seed seed = *find_seed();
 
 static_assert(seed == Seed{'V', 'm', '0'}, "Seed is expected to be 'Vm0'");
 
+class ByteQueue
+{
+private:
+    std::deque<uint8_t> deque_;
+
+public:
+    ByteQueue() = default;
+
+    bool empty() const
+    {
+        return deque_.empty();
+    }
+
+    void push_back(uint8_t c)
+    {
+        deque_.push_back(c);
+    }
+
+    uint8_t front() const
+    {
+        return deque_.front();
+    }
+
+    void pop_front()
+    {
+        deque_.pop_front();
+    }
+};
+
 class Base64Queue
 {
 private:
     int state_;
+    ByteQueue bytes_;
     std::optional<uint8_t> peek_;
-    std::deque<uint8_t> bytes_;
 
 public:
     Base64Queue() :
