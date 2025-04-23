@@ -2,6 +2,7 @@
 #include <charconv>
 #include <deque>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -65,34 +66,44 @@ static_assert(seed == Seed{'V', 'm', '0'}, "Seed is expected to be 'Vm0'");
 class ByteQueue
 {
 private:
-    std::deque<uint8_t> deque_;
+    size_t index_;
+    size_t size_;
+    size_t max_size_;
+    std::unique_ptr<uint8_t[]> buffer_;
 
 public:
-    ByteQueue() = default;
+    explicit ByteQueue(size_t max_size) :
+        index_(0),
+        size_(0),
+        max_size_(max_size),
+        buffer_(std::make_unique<uint8_t[]>(max_size))
+    {}
 
     bool empty() const
     {
-        return deque_.empty();
+        return size_ == 0;
     }
 
     size_t size() const
     {
-        return deque_.size();
+        return size_;
     }
 
     uint8_t operator[](size_t i) const
     {
-        return deque_[i];
+        return buffer_[(index_ + i) % max_size_];
     }
 
     void push_back(uint8_t c)
     {
-        deque_.push_back(c);
+        buffer_[(index_ + size_) % max_size_] = c;
+        ++size_;
     }
 
     void pop_front()
     {
-        deque_.pop_front();
+        ++index_;
+        --size_;
     }
 };
 
@@ -103,8 +114,9 @@ private:
     ByteQueue bytes_;
 
 public:
-    Base64Queue() :
-        state_(0)
+    Base64Queue(size_t max) :
+        state_(0),
+        bytes_((max + 3) / 4)
     {}
 
     bool empty() const
@@ -195,7 +207,7 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    Base64Queue b64q;
+    Base64Queue b64q(n);
 
     size_t i = 0;
 
