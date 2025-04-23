@@ -75,14 +75,19 @@ public:
         return deque_.empty();
     }
 
+    size_t size() const
+    {
+        return deque_.size();
+    }
+
+    uint8_t operator[](size_t i) const
+    {
+        return deque_[i];
+    }
+
     void push_back(uint8_t c)
     {
         deque_.push_back(c);
-    }
-
-    uint8_t front() const
-    {
-        return deque_.front();
     }
 
     void pop_front()
@@ -96,7 +101,6 @@ class Base64Queue
 private:
     int state_;
     ByteQueue bytes_;
-    std::optional<uint8_t> peek_;
 
 public:
     Base64Queue() :
@@ -119,28 +123,30 @@ public:
 
         switch (state_) {
         case 0:
-            i = bytes_.front() >> 2;
+            i = bytes_[0] >> 2;
             break;
         case 1:
-            i = (*peek_ << 4) % 64;
-            if (!bytes_.empty()) {
-                i |= bytes_.front() >> 4;
+            i = (bytes_[0] << 4) % 64;
+            if (1 < bytes_.size()) {
+                i |= bytes_[1] >> 4;
             }
             break;
         case 2:
-            if (!peek_) {
+            if (0 < bytes_.size()) {
+                i = (bytes_[0] << 2) % 64;
+                if (1 < bytes_.size()) {
+                    i |= bytes_[1] >> 6;
+                }
+            } else {
                 return '=';
-            }
-            i = (*peek_ << 2) % 64;
-            if (!bytes_.empty()) {
-                i |= bytes_.front() >> 6;
             }
             break;
         case 3:
-            if (!peek_) {
+            if (0 < bytes_.size()) {
+                i = bytes_[0] % 64;
+            } else {
                 return '=';
             }
-            i = *peek_ % 64;
             break;
         default:
             std::unreachable();
@@ -151,14 +157,23 @@ public:
 
     void pop_front()
     {
-        state_ = (state_ + 1) % 4;
-
-        if (state_ == 0 || bytes_.empty()) {
-            peek_.reset();
-        } else {
-            peek_ = bytes_.front();
+        switch (state_) {
+        case 0:
+            break;
+        case 1:
             bytes_.pop_front();
+            break;
+        case 2:
+        case 3:
+            if (!bytes_.empty()) {
+                bytes_.pop_front();
+            }
+            break;
+        default:
+            std::unreachable();
         }
+
+        state_ = (state_ + 1) % 4;
     }
 };
 
